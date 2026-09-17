@@ -14,18 +14,19 @@ ASSISTS_COLUMN_WIDTH = 7
 STATS_FILE_PATH = REPO_DIRECTORY / "README.md"
 
 STATS_FILE_TEMPLATE = (
-    "# My Football Match Stats [Organised By: Footy Addicts]\n"
+    "# My Football Stats (Footy Addicts)\n"
+    "\n"
+    "*Auto-recorded after every match by a script in this repo.*\n"
     "\n"
     "Total Match Played = 0 | Total Goals = 0 | Total Assists = 0\n"
     "\n"
     f"| {'Date':<{DATE_COLUMN_WIDTH}} | {'Goals':<{GOALS_COLUMN_WIDTH}} | {'Assists':<{ASSISTS_COLUMN_WIDTH}} |\n"
-    f"| {'-' * DATE_COLUMN_WIDTH} | {'-' * GOALS_COLUMN_WIDTH} |\n"
+    f"| {'-' * DATE_COLUMN_WIDTH} | {'-' * GOALS_COLUMN_WIDTH} | {'-' * ASSISTS_COLUMN_WIDTH} |\n"
 )
 
 TOTALS_LINE_PATTERN = re.compile(
     r"^Total Match Played = (\d+) \| Total Goals = (\d+) \| Total Assists = (\d+)$"
 )
-
 
 WINDOW_WIDTH_PIXELS = 1920
 WINDOW_HEIGHT_PIXELS = 800
@@ -84,6 +85,7 @@ def prompt_for_match_entry():
         return None
     return (date.today().strftime(MATCH_DATE_FORMAT), entered_values["goals"], entered_values["assists"])
 
+
 def create_stats_file_with_header_if_missing(stats_file_path):
     if not stats_file_path.exists():
         stats_file_path.write_text(STATS_FILE_TEMPLATE)
@@ -110,6 +112,9 @@ def append_match_row_and_update_totals_line(stats_file_path, match_row):
                 f"| Total Assists = {int(matched_totals.group(3)) + assists}"
             )
             break
+    else:
+        raise ValueError(f"No totals line matching TOTALS_LINE_PATTERN found in {stats_file_path}")
+
     stats_file_path.write_text("\n".join(stats_file_lines) + "\n")
 
 
@@ -121,11 +126,11 @@ def commit_and_push_stats_file(repo_directory, stats_file_path):
 
 
 def main():
-    match_row = prompt_for_match_entry()                                 
+    match_row = prompt_for_match_entry()
     if match_row is None:
         return
-    append_match_row_and_update_totals_line(STATS_FILE_PATH, match_row)  
-    commit_and_push_stats_file(REPO_DIRECTORY, STATS_FILE_PATH)        
+    append_match_row_and_update_totals_line(STATS_FILE_PATH, match_row)
+    commit_and_push_stats_file(REPO_DIRECTORY, STATS_FILE_PATH)
 
 
 if __name__ == "__main__":
