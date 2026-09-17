@@ -1,6 +1,6 @@
 # My Football Match Stats [Organised By: Footy Addicts]
 
-Total Match Played = 8 | Total Goals = 8 | Total Assists = 6
+Total Match Played = 7 | Total Goals = 6 | Total Assists = 4
 
 | Date                  | Goals | Assists |
 | --------------------- | ----- | ------- |
@@ -8,7 +8,3 @@ Total Match Played = 8 | Total Goals = 8 | Total Assists = 6
 | 13 Sep 2026 Sunday    | 1     | 1       |
 | 17 Sep 2026 Thursday  | 3     | 2       |
 | 18 Sep 2026 Friday    | 1     | 1       |
-| 18 Sep 2026 Friday    | 1     | 1       |
-| 18 Sep 2026 Friday    | 1     | 1       |
-| 18 Sep 2026 Friday    | 4     | 4       |
-| 18 Sep 2026 Friday    | 2     | 2       |
