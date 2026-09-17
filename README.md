@@ -7,4 +7,4 @@ Total Match Played = 6 | Total Goals = 5 | Total Assists = 3
 | 27 Aug 2026 Tuesday   | 1     | 0       |
 | 13 Sep 2026 Sunday    | 1     | 1       |
 | 17 Sep 2026 Thursday  | 3     | 2       |
-| 18 Sep 2026 Friday    | 2     | 0       |
+| 18 Sep 2026 Friday    | 3     | 0       |
