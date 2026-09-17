@@ -1,11 +1,3 @@
-"""
-The script has four function doing a specific task.
-1. promptForMatchEntry(): This shows th prompt dialogue, where we can entry our desired result 
-2. readExistingMatchRows(statsFilePath): Read match record so we can count total assists and goals 
-3. appendMatchRowAndRewriteTotals(statsFilePath, matchRow): rewrite entries when new data entry detected 
-4. commitAndPushStatsFile(repoDirectory, statsFilePath): automate the git push 
-"""
-
 import re
 import subprocess
 import tkinter as tk
@@ -15,18 +7,22 @@ from tkinter import messagebox
 
 
 REPO_DIRECTORY = Path(__file__).resolve().parent
+MATCH_DATE_FORMAT = "%d %b %Y %A"
+DATE_COLUMN_WIDTH = 21 
+GOALS_COLUMN_WIDTH = 5
+ASSISTS_COLUMN_WIDTH = 7
 STATS_FILE_PATH = REPO_DIRECTORY / "STATS.md"
 STATS_FILE_TEMPLATE = (
     "# Football Stats\n"
     "\n"
     "Total Goals = 0 | Total Assists = 0\n"
     "\n"
-    "| Date | Goals | Assists |\n"
-    "| --- | --- | --- |\n"
+    f"| {'Date':<{DATE_COLUMN_WIDTH}} | {'Goals':<{GOALS_COLUMN_WIDTH}} | {'Assists':<{ASSISTS_COLUMN_WIDTH}} |\n"
+    f"| {'-' * DATE_COLUMN_WIDTH} | {'-' * GOALS_COLUMN_WIDTH} | {'-' * ASSISTS_COLUMN_WIDTH} |\n"
 )
 TOTALS_LINE_PATTERN = re.compile(r"^Total Goals = (\d+) \| Total Assists = (\d+)$")
 
-
+ASSISTS_COLUMN_WIDTH = 7
 def promptForMatchEntry():
     window = tk.Tk()
     window.title("Football stats")
@@ -60,7 +56,7 @@ def promptForMatchEntry():
 
     if not enteredValues:
         return None
-    return (date.today().isoformat(), enteredValues["goals"], enteredValues["assists"])
+    return (date.today().strftime(MATCH_DATE_FORMAT), enteredValues["goals"], enteredValues["assists"])
 
 
 def createStatsFileWithHeaderIfMissing(statsFilePath):
@@ -73,7 +69,11 @@ def appendMatchRowAndUpdateTotalsLine(statsFilePath, matchRow):
     matchDate, goals, assists = matchRow
 
     with statsFilePath.open("a") as statsFile:
-        statsFile.write(f"| {matchDate} | {goals} | {assists} |\n")
+        statsFile.write(
+            f"| {matchDate:<{DATE_COLUMN_WIDTH}} "
+            f"| {goals:<{GOALS_COLUMN_WIDTH}} "
+            f"| {assists:<{ASSISTS_COLUMN_WIDTH}} |\n"
+        )
 
     statsFileLines = statsFilePath.read_text().splitlines()
     for lineIndex, line in enumerate(statsFileLines):
@@ -88,7 +88,9 @@ def appendMatchRowAndUpdateTotalsLine(statsFilePath, matchRow):
 
 
 def commitAndPushStatsFile(repoDirectory, statsFilePath):
-    commitMessage = f"Record match stats for {date.today().isoformat()}"
+    commitMessage = f"Record match stats for {date.today().strftime(MATCH_DATE_FORMAT)}"
+    subprocess.run(["git", "add", statsFilePath.name], cwd=repoDirectory, check=True)
+    subprocess.run(["git", "commit", "-m", commitMessage], cwd=repoDirectory, check=True)
     subprocess.run(["git", "push"], cwd=repoDirectory, check=True)
 
 
