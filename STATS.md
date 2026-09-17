@@ -1,7 +1,9 @@
 # Football Stats
 
-Total Goals = 6 | Total Assists = 4
+Total Goals = 3 | Total Assists = 2
 
 | Date                  | Goals | Assists |
 | --------------------- | ----- | ------- |
-| 13 Sep 2026 Saturday  | 1     | 0       || 17 Sep 2026 Thursday  | 3     | 2       |
+| 27 Aug 2026 Thursday  | 1     | 0       |
+| 13 Sep 2026 Sunday    | 1     | 0       |
+| 17 Sep 2026 Thursday  | 3     | 2       |
