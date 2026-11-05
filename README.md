@@ -2,7 +2,7 @@
 
 *Auto-recorded after every match by a script in this repo.*
 
-Total Match Played = 5 | Total Goals = 8 | Total Assists = 5
+Total Match Played = 6 | Total Goals = 9 | Total Assists = 5
 
 | Date                  | Goals | Assists |
 | --------------------- | ----- | ------- |
@@ -11,3 +11,4 @@ Total Match Played = 5 | Total Goals = 8 | Total Assists = 5
 | 17 Sep 2026 Thursday  | 3     | 2       |
 | 28 Sep 2026 Monday    | 2     | 1       |
 | 29 Oct 2026 Thursday  | 1     | 1       |
+| 05 Nov 2026 Thursday  | 1     | 0       |
