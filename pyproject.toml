@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "footie"
+version = "1.0.0"
+description = "Record goals, assists and venues after every football match, stored in SQLite and published to a README."
+readme = "doc/USAGE.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+footie = "footie.cli.command_line:run_footie_command_line"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
