@@ -4,6 +4,8 @@ Footie records your goals, assists and venue after every match. The data lives i
 
 Works on Linux, macOS and Windows. Requires Python 3.9+ with Tkinter.
 
+![Footie match entry window](https://raw.githubusercontent.com/abdursujon/footie/main/data/footie_gui.png)
+
 ## Install
 
 Install with [pipx](https://pipx.pypa.io/):
