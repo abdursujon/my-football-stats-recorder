@@ -276,96 +276,159 @@ def run_where_command(database_connection, parsed_arguments):
     return 0
 
 
-def build_argument_parser():
-    argument_parser = argparse.ArgumentParser(
+# footie: show stats, or open the entry window from the daily reminder
+def create_footie_root():
+    footie = argparse.ArgumentParser(
         prog="footie", description="Record football match stats. Run with no command to show your stats."
     )
-    argument_parser.add_argument("--version", action="version", version=f"footie {__version__}")
-    argument_parser.add_argument(
+    footie.add_argument("--version", action="version", version=f"footie {__version__}")
+    footie.add_argument(
         "--if-no-record-today", action="store_true",
         help="open the entry window only if no match is recorded for today (used by the daily reminder)",
     )
-    argument_parser.set_defaults(command_handler=run_default_command)
-    subcommand_parsers = argument_parser.add_subparsers(title="commands", metavar="COMMAND")
+    footie.set_defaults(command_handler=run_default_command)
+    return footie
 
-    add_parser = subcommand_parsers.add_parser(
+
+# footie add: open the entry window, or record a match directly from options
+def add(subcommand):
+    footie_add = subcommand.add_parser(
         "add", help="open the match entry window, or record directly when any option is given"
     )
-    add_parser.add_argument("--venue", help="venue name")
-    add_parser.add_argument("--goals", help="goals scored (default 0)")
-    add_parser.add_argument("--assists", help="assists (default 0)")
-    add_parser.add_argument("--date", help=f"match date {UK_DATE_FORMAT_HINT} (default today)")
-    add_parser.set_defaults(command_handler=run_add_command)
+    footie_add.add_argument("--venue", help="venue name")
+    footie_add.add_argument("--goals", help="goals scored (default 0)")
+    footie_add.add_argument("--assists", help="assists (default 0)")
+    footie_add.add_argument("--date", help=f"match date {UK_DATE_FORMAT_HINT} (default today)")
+    footie_add.set_defaults(command_handler=run_add_command)
 
-    list_parser = subcommand_parsers.add_parser("list", help="list every match with its ID")
-    list_parser.set_defaults(command_handler=run_list_command)
 
-    delete_parser = subcommand_parsers.add_parser("delete", help="delete a match by ID (see 'footie list')")
-    delete_parser.add_argument("match_id", type=int, help="match ID")
-    delete_parser.set_defaults(command_handler=run_delete_command)
+# footie list: print every match with its ID
+def list_matches(subcommand):
+    footie_list = subcommand.add_parser("list", help="list every match with its ID")
+    footie_list.set_defaults(command_handler=run_list_command)
 
-    stats_parser = subcommand_parsers.add_parser("stats", help="print totals and the match table")
-    stats_parser.set_defaults(command_handler=run_stats_command)
 
-    venues_parser = subcommand_parsers.add_parser("venues", help="list known venues, most played first")
-    venues_parser.set_defaults(command_handler=run_venues_command)
+# footie delete: remove one match by ID
+def delete(subcommand):
+    footie_delete = subcommand.add_parser("delete", help="delete a match by ID (see 'footie list')")
+    footie_delete.add_argument("match_id", type=int, help="match ID")
+    footie_delete.set_defaults(command_handler=run_delete_command)
 
-    change_profile_parser = subcommand_parsers.add_parser("change-profile", help="set your Footy Addicts profile URL")
-    change_profile_parser.add_argument("url", help="for example https://footyaddicts.com/players/<name>")
-    change_profile_parser.set_defaults(command_handler=run_change_profile_command)
 
-    profile_parser = subcommand_parsers.add_parser("profile", help="show the saved profile URL")
-    profile_parser.set_defaults(command_handler=run_profile_command)
+# footie stats: print totals and the match table
+def stats(subcommand):
+    footie_stats = subcommand.add_parser("stats", help="print totals and the match table")
+    footie_stats.set_defaults(command_handler=run_stats_command)
 
-    set_stats_readme_parser = subcommand_parsers.add_parser(
+
+# footie venues: list known venues, most played first
+def venues(subcommand):
+    footie_venues = subcommand.add_parser("venues", help="list known venues, most played first")
+    footie_venues.set_defaults(command_handler=run_venues_command)
+
+
+# footie change-profile: save the Footy Addicts profile URL
+def change_profile(subcommand):
+    footie_change_profile = subcommand.add_parser("change-profile", help="set your Footy Addicts profile URL")
+    footie_change_profile.add_argument("url", help="for example https://footyaddicts.com/players/<name>")
+    footie_change_profile.set_defaults(command_handler=run_change_profile_command)
+
+
+# footie profile: print the saved profile URL
+def profile(subcommand):
+    footie_profile = subcommand.add_parser("profile", help="show the saved profile URL")
+    footie_profile.set_defaults(command_handler=run_profile_command)
+
+
+# footie set-stats-readme: choose the README that stats are published to
+def set_stats_readme(subcommand):
+    footie_set_stats_readme = subcommand.add_parser(
         "set-stats-readme", help="choose the README file your stats are written to"
     )
-    set_stats_readme_parser.add_argument("path", help="path to a README.md, usually inside a git repository")
-    set_stats_readme_parser.add_argument(
+    footie_set_stats_readme.add_argument("path", help="path to a README.md, usually inside a git repository")
+    footie_set_stats_readme.add_argument(
         "--git", choices=GIT_PUBLISHING_MODES, default=GIT_PUBLISHING_PUSH,
         help="after each save: commit and push (default), commit only, or no git",
     )
-    set_stats_readme_parser.set_defaults(command_handler=run_set_stats_readme_command)
+    footie_set_stats_readme.set_defaults(command_handler=run_set_stats_readme_command)
 
-    publish_parser = subcommand_parsers.add_parser("publish", help="rewrite the stats README and commit/push it")
-    publish_parser.set_defaults(command_handler=run_publish_command)
 
-    import_csv_parser = subcommand_parsers.add_parser(
+# footie publish: rewrite the stats README and commit and push it
+def publish(subcommand):
+    footie_publish = subcommand.add_parser("publish", help="rewrite the stats README and commit/push it")
+    footie_publish.set_defaults(command_handler=run_publish_command)
+
+
+# footie import-csv: import matches from a CSV file
+def import_csv(subcommand):
+    footie_import_csv = subcommand.add_parser(
         "import-csv", help=f"import matches from a CSV with columns date ({UK_DATE_FORMAT_HINT}),venue,goals,assists"
     )
-    import_csv_parser.add_argument("file", help="CSV file path")
-    import_csv_parser.add_argument(
+    footie_import_csv.add_argument("file", help="CSV file path")
+    footie_import_csv.add_argument(
         "--keep-duplicates", action="store_true",
         help="also import rows identical to a match already recorded (same date, venue, goals and assists)",
     )
-    import_csv_parser.set_defaults(command_handler=run_import_csv_command)
+    footie_import_csv.set_defaults(command_handler=run_import_csv_command)
 
-    install_schedule_parser = subcommand_parsers.add_parser(
+
+# footie install-schedule: install the daily reminder for this operating system
+def install_schedule(subcommand):
+    footie_install_schedule = subcommand.add_parser(
         "install-schedule", help="install the daily reminder for this operating system"
     )
-    install_schedule_parser.add_argument(
+    footie_install_schedule.add_argument(
         "--os", choices=SUPPORTED_SCHEDULE_BACKENDS, help="scheduler to use (default: detected from this system)"
     )
-    install_schedule_parser.add_argument(
+    footie_install_schedule.add_argument(
         "--time", default=DEFAULT_REMINDER_TIME, help=f"reminder time HH:MM (default {DEFAULT_REMINDER_TIME})"
     )
-    install_schedule_parser.set_defaults(command_handler=run_install_schedule_command)
+    footie_install_schedule.set_defaults(command_handler=run_install_schedule_command)
 
-    remove_schedule_parser = subcommand_parsers.add_parser("remove-schedule", help="remove the daily reminder")
-    remove_schedule_parser.add_argument("--os", choices=SUPPORTED_SCHEDULE_BACKENDS, help="scheduler to remove from")
-    remove_schedule_parser.set_defaults(command_handler=run_remove_schedule_command)
 
-    show_schedule_parser = subcommand_parsers.add_parser("show-schedule", help="show the installed reminder")
-    show_schedule_parser.set_defaults(command_handler=run_show_schedule_command)
+# footie remove-schedule: remove the daily reminder
+def remove_schedule(subcommand):
+    footie_remove_schedule = subcommand.add_parser("remove-schedule", help="remove the daily reminder")
+    footie_remove_schedule.add_argument("--os", choices=SUPPORTED_SCHEDULE_BACKENDS, help="scheduler to remove from")
+    footie_remove_schedule.set_defaults(command_handler=run_remove_schedule_command)
 
-    where_parser = subcommand_parsers.add_parser("where", help="show where data and settings are stored")
-    where_parser.set_defaults(command_handler=run_where_command)
 
-    return argument_parser
+# footie show-schedule: print the installed reminder time and scheduler
+def show_schedule(subcommand):
+    footie_show_schedule = subcommand.add_parser("show-schedule", help="show the installed reminder")
+    footie_show_schedule.set_defaults(command_handler=run_show_schedule_command)
+
+
+# footie where: print the database location and saved settings
+def where(subcommand):
+    footie_where = subcommand.add_parser("where", help="show where data and settings are stored")
+    footie_where.set_defaults(command_handler=run_where_command)
+
+
+def build_footie_command_line():
+    footie = create_footie_root()
+    subcommand = footie.add_subparsers(title="commands", metavar="COMMAND")
+
+    add(subcommand)
+    list_matches(subcommand)
+    delete(subcommand)
+    stats(subcommand)
+    venues(subcommand)
+    change_profile(subcommand)
+    profile(subcommand)
+    set_stats_readme(subcommand)
+    publish(subcommand)
+    import_csv(subcommand)
+    install_schedule(subcommand)
+    remove_schedule(subcommand)
+    show_schedule(subcommand)
+    where(subcommand)
+
+    return footie
 
 
 def run_footie_command_line(argument_list=None):
-    parsed_arguments = build_argument_parser().parse_args(argument_list)
+    parsed_arguments = build_footie_command_line().parse_args(argument_list)
     parsed_arguments.database_file_path = resolve_database_file_path()
     database_connection = open_stats_database(parsed_arguments.database_file_path)
     try:
