@@ -42,7 +42,12 @@ class CareerTotals:
 
 
 def read_matches_table_column_names(database_connection):
-    return [column_row[1] for column_row in database_connection.execute("PRAGMA table_info(matches)").fetchall()]
+    return [
+        column_row[1]
+        for column_row in database_connection.execute(
+            "PRAGMA table_info(matches)"
+        ).fetchall()
+    ]
 
 
 def migrate_one_match_per_date_table_to_match_id_table(database_connection):
@@ -50,7 +55,9 @@ def migrate_one_match_per_date_table_to_match_id_table(database_connection):
     if not existing_column_names or "match_id" in existing_column_names:
         return
     with database_connection:
-        database_connection.execute("ALTER TABLE matches RENAME TO matches_one_per_date")
+        database_connection.execute(
+            "ALTER TABLE matches RENAME TO matches_one_per_date"
+        )
         database_connection.executescript(MATCHES_AND_SETTINGS_SCHEMA)
         database_connection.execute(
             "INSERT INTO matches (match_date, venue, goals, assists) "
@@ -71,26 +78,36 @@ def insert_match_record(database_connection, match_record):
     with database_connection:
         inserted_row_cursor = database_connection.execute(
             "INSERT INTO matches (match_date, venue, goals, assists) VALUES (?, ?, ?, ?)",
-            (match_record.match_date.isoformat(), match_record.venue, match_record.goals, match_record.assists),
+            (
+                match_record.match_date.isoformat(),
+                match_record.venue,
+                match_record.goals,
+                match_record.assists,
+            ),
         )
     return inserted_row_cursor.lastrowid
 
 
 def convert_row_to_match_record(match_row):
     match_id, match_date_text, venue, goals, assists = match_row
-    return MatchRecord(date.fromisoformat(match_date_text), venue, goals, assists, match_id)
+    return MatchRecord(
+        date.fromisoformat(match_date_text), venue, goals, assists, match_id
+    )
 
 
 def fetch_match_record_by_id(database_connection, match_id):
     match_row = database_connection.execute(
-        "SELECT match_id, match_date, venue, goals, assists FROM matches WHERE match_id = ?", (match_id,)
+        "SELECT match_id, match_date, venue, goals, assists FROM matches WHERE match_id = ?",
+        (match_id,),
     ).fetchone()
     return convert_row_to_match_record(match_row) if match_row else None
 
 
 def delete_match_record_by_id(database_connection, match_id):
     with database_connection:
-        deleted_rows_cursor = database_connection.execute("DELETE FROM matches WHERE match_id = ?", (match_id,))
+        deleted_rows_cursor = database_connection.execute(
+            "DELETE FROM matches WHERE match_id = ?", (match_id,)
+        )
     return deleted_rows_cursor.rowcount > 0
 
 
@@ -104,7 +121,12 @@ def has_match_record_for_date(database_connection, match_date):
 def has_identical_match_record(database_connection, match_record):
     matching_row = database_connection.execute(
         "SELECT 1 FROM matches WHERE match_date = ? AND venue = ? AND goals = ? AND assists = ?",
-        (match_record.match_date.isoformat(), match_record.venue, match_record.goals, match_record.assists),
+        (
+            match_record.match_date.isoformat(),
+            match_record.venue,
+            match_record.goals,
+            match_record.assists,
+        ),
     ).fetchone()
     return matching_row is not None
 
@@ -149,10 +171,13 @@ def read_setting_value(database_connection, setting_key, default_value=None):
 def write_setting_value(database_connection, setting_key, setting_value):
     with database_connection:
         database_connection.execute(
-            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (setting_key, setting_value)
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            (setting_key, setting_value),
         )
 
 
 def delete_setting_value(database_connection, setting_key):
     with database_connection:
-        database_connection.execute("DELETE FROM settings WHERE key = ?", (setting_key,))
+        database_connection.execute(
+            "DELETE FROM settings WHERE key = ?", (setting_key,)
+        )

@@ -55,7 +55,9 @@ def parse_reminder_time_to_hour_and_minute(reminder_time_text):
     return hour, minute
 
 
-def run_scheduler_command_and_raise_on_failure(schedule_environment, command_arguments, input_text=None):
+def run_scheduler_command_and_raise_on_failure(
+    schedule_environment, command_arguments, input_text=None
+):
     completed_process = schedule_environment.run_command(
         command_arguments, input=input_text, capture_output=True, text=True, check=False
     )
@@ -67,8 +69,12 @@ def run_scheduler_command_and_raise_on_failure(schedule_environment, command_arg
 
 
 def build_reminder_command_line(python_executable):
-    return " ".join([f'"{python_executable}"' if " " in python_executable else python_executable,
-                     *REMINDER_MODULE_ARGUMENTS])
+    return " ".join(
+        [
+            f'"{python_executable}"' if " " in python_executable else python_executable,
+            *REMINDER_MODULE_ARGUMENTS,
+        ]
+    )
 
 
 def resolve_systemd_user_unit_directory(home_directory):
@@ -102,15 +108,22 @@ def build_systemd_timer_unit_text(hour, minute):
 
 
 def install_systemd_timer_for_daily_reminder(schedule_environment, hour, minute):
-    unit_directory = resolve_systemd_user_unit_directory(schedule_environment.home_directory)
+    unit_directory = resolve_systemd_user_unit_directory(
+        schedule_environment.home_directory
+    )
     unit_directory.mkdir(parents=True, exist_ok=True)
     (unit_directory / f"{SYSTEMD_UNIT_NAME}.service").write_text(
         build_systemd_service_unit_text(schedule_environment.python_executable)
     )
-    (unit_directory / f"{SYSTEMD_UNIT_NAME}.timer").write_text(build_systemd_timer_unit_text(hour, minute))
-    run_scheduler_command_and_raise_on_failure(schedule_environment, ["systemctl", "--user", "daemon-reload"])
+    (unit_directory / f"{SYSTEMD_UNIT_NAME}.timer").write_text(
+        build_systemd_timer_unit_text(hour, minute)
+    )
     run_scheduler_command_and_raise_on_failure(
-        schedule_environment, ["systemctl", "--user", "enable", "--now", f"{SYSTEMD_UNIT_NAME}.timer"]
+        schedule_environment, ["systemctl", "--user", "daemon-reload"]
+    )
+    run_scheduler_command_and_raise_on_failure(
+        schedule_environment,
+        ["systemctl", "--user", "enable", "--now", f"{SYSTEMD_UNIT_NAME}.timer"],
     )
     return f"systemd user timer {SYSTEMD_UNIT_NAME}.timer in {unit_directory}"
 
@@ -118,25 +131,39 @@ def install_systemd_timer_for_daily_reminder(schedule_environment, hour, minute)
 def remove_systemd_timer_for_daily_reminder(schedule_environment):
     schedule_environment.run_command(
         ["systemctl", "--user", "disable", "--now", f"{SYSTEMD_UNIT_NAME}.timer"],
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
-    unit_directory = resolve_systemd_user_unit_directory(schedule_environment.home_directory)
+    unit_directory = resolve_systemd_user_unit_directory(
+        schedule_environment.home_directory
+    )
     for unit_suffix in ("service", "timer"):
         (unit_directory / f"{SYSTEMD_UNIT_NAME}.{unit_suffix}").unlink(missing_ok=True)
-    run_scheduler_command_and_raise_on_failure(schedule_environment, ["systemctl", "--user", "daemon-reload"])
+    run_scheduler_command_and_raise_on_failure(
+        schedule_environment, ["systemctl", "--user", "daemon-reload"]
+    )
     return f"systemd user timer {SYSTEMD_UNIT_NAME}.timer"
 
 
 def remove_reminder_line_from_crontab_text(existing_crontab_text):
-    kept_lines = [line for line in existing_crontab_text.splitlines() if not line.rstrip().endswith(CRON_LINE_MARKER)]
+    kept_lines = [
+        line
+        for line in existing_crontab_text.splitlines()
+        if not line.rstrip().endswith(CRON_LINE_MARKER)
+    ]
     return "\n".join(kept_lines) + ("\n" if kept_lines else "")
 
 
-def build_crontab_text_with_reminder_line(existing_crontab_text, python_executable, hour, minute):
-    reminder_cron_line = (
-        f"{minute} {hour} * * * DISPLAY=:0 {build_reminder_command_line(python_executable)} {CRON_LINE_MARKER}"
+def build_crontab_text_with_reminder_line(
+    existing_crontab_text, python_executable, hour, minute
+):
+    reminder_cron_line = f"{minute} {hour} * * * DISPLAY=:0 {build_reminder_command_line(python_executable)} {CRON_LINE_MARKER}"
+    return (
+        remove_reminder_line_from_crontab_text(existing_crontab_text)
+        + reminder_cron_line
+        + "\n"
     )
-    return remove_reminder_line_from_crontab_text(existing_crontab_text) + reminder_cron_line + "\n"
 
 
 def read_current_crontab_text(schedule_environment):
@@ -148,15 +175,24 @@ def read_current_crontab_text(schedule_environment):
 
 def install_cron_job_for_daily_reminder(schedule_environment, hour, minute):
     updated_crontab_text = build_crontab_text_with_reminder_line(
-        read_current_crontab_text(schedule_environment), schedule_environment.python_executable, hour, minute
+        read_current_crontab_text(schedule_environment),
+        schedule_environment.python_executable,
+        hour,
+        minute,
     )
-    run_scheduler_command_and_raise_on_failure(schedule_environment, ["crontab", "-"], input_text=updated_crontab_text)
+    run_scheduler_command_and_raise_on_failure(
+        schedule_environment, ["crontab", "-"], input_text=updated_crontab_text
+    )
     return "crontab entry"
 
 
 def remove_cron_job_for_daily_reminder(schedule_environment):
-    updated_crontab_text = remove_reminder_line_from_crontab_text(read_current_crontab_text(schedule_environment))
-    run_scheduler_command_and_raise_on_failure(schedule_environment, ["crontab", "-"], input_text=updated_crontab_text)
+    updated_crontab_text = remove_reminder_line_from_crontab_text(
+        read_current_crontab_text(schedule_environment)
+    )
+    run_scheduler_command_and_raise_on_failure(
+        schedule_environment, ["crontab", "-"], input_text=updated_crontab_text
+    )
     return "crontab entry"
 
 
@@ -197,17 +233,27 @@ def install_launchd_agent_for_daily_reminder(schedule_environment, hour, minute)
     plist_path = resolve_launchd_plist_path(schedule_environment.home_directory)
     plist_path.parent.mkdir(parents=True, exist_ok=True)
     schedule_environment.run_command(
-        ["launchctl", "unload", str(plist_path)], capture_output=True, text=True, check=False
+        ["launchctl", "unload", str(plist_path)],
+        capture_output=True,
+        text=True,
+        check=False,
     )
-    plist_path.write_text(build_launchd_plist_text(schedule_environment.python_executable, hour, minute))
-    run_scheduler_command_and_raise_on_failure(schedule_environment, ["launchctl", "load", "-w", str(plist_path)])
+    plist_path.write_text(
+        build_launchd_plist_text(schedule_environment.python_executable, hour, minute)
+    )
+    run_scheduler_command_and_raise_on_failure(
+        schedule_environment, ["launchctl", "load", "-w", str(plist_path)]
+    )
     return f"launchd agent {plist_path}"
 
 
 def remove_launchd_agent_for_daily_reminder(schedule_environment):
     plist_path = resolve_launchd_plist_path(schedule_environment.home_directory)
     schedule_environment.run_command(
-        ["launchctl", "unload", "-w", str(plist_path)], capture_output=True, text=True, check=False
+        ["launchctl", "unload", "-w", str(plist_path)],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     plist_path.unlink(missing_ok=True)
     return f"launchd agent {plist_path}"
@@ -216,25 +262,41 @@ def remove_launchd_agent_for_daily_reminder(schedule_environment):
 def resolve_windowless_python_executable(python_executable):
     python_executable_path = Path(python_executable)
     windowless_python_path = python_executable_path.with_name("pythonw.exe")
-    return str(windowless_python_path) if windowless_python_path.exists() else python_executable
+    return (
+        str(windowless_python_path)
+        if windowless_python_path.exists()
+        else python_executable
+    )
 
 
 def build_windows_scheduled_task_create_command(python_executable, hour, minute):
     task_command_line = " ".join([f'"{python_executable}"', *REMINDER_MODULE_ARGUMENTS])
     return [
-        "schtasks", "/Create", "/F",
-        "/SC", "DAILY",
-        "/TN", WINDOWS_TASK_NAME,
-        "/ST", f"{hour:02d}:{minute:02d}",
-        "/TR", task_command_line,
+        "schtasks",
+        "/Create",
+        "/F",
+        "/SC",
+        "DAILY",
+        "/TN",
+        WINDOWS_TASK_NAME,
+        "/ST",
+        f"{hour:02d}:{minute:02d}",
+        "/TR",
+        task_command_line,
     ]
 
 
-def install_windows_scheduled_task_for_daily_reminder(schedule_environment, hour, minute):
+def install_windows_scheduled_task_for_daily_reminder(
+    schedule_environment, hour, minute
+):
     run_scheduler_command_and_raise_on_failure(
         schedule_environment,
         build_windows_scheduled_task_create_command(
-            resolve_windowless_python_executable(schedule_environment.python_executable), hour, minute
+            resolve_windowless_python_executable(
+                schedule_environment.python_executable
+            ),
+            hour,
+            minute,
         ),
     )
     return f"Windows scheduled task {WINDOWS_TASK_NAME}"
@@ -262,14 +324,20 @@ SCHEDULE_REMOVERS_BY_BACKEND = {
 }
 
 
-def install_daily_reminder_schedule(schedule_backend, reminder_time_text, schedule_environment=None):
+def install_daily_reminder_schedule(
+    schedule_backend, reminder_time_text, schedule_environment=None
+):
     if schedule_backend not in SCHEDULE_INSTALLERS_BY_BACKEND:
         raise ScheduleError(f"Unknown schedule backend {schedule_backend!r}")
     hour, minute = parse_reminder_time_to_hour_and_minute(reminder_time_text)
-    return SCHEDULE_INSTALLERS_BY_BACKEND[schedule_backend](schedule_environment or ScheduleEnvironment(), hour, minute)
+    return SCHEDULE_INSTALLERS_BY_BACKEND[schedule_backend](
+        schedule_environment or ScheduleEnvironment(), hour, minute
+    )
 
 
 def remove_daily_reminder_schedule(schedule_backend, schedule_environment=None):
     if schedule_backend not in SCHEDULE_REMOVERS_BY_BACKEND:
         raise ScheduleError(f"Unknown schedule backend {schedule_backend!r}")
-    return SCHEDULE_REMOVERS_BY_BACKEND[schedule_backend](schedule_environment or ScheduleEnvironment())
+    return SCHEDULE_REMOVERS_BY_BACKEND[schedule_backend](
+        schedule_environment or ScheduleEnvironment()
+    )
